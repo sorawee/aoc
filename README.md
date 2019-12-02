@@ -9,6 +9,7 @@ racket runner.rkt [--day <day>] <mode>
 ```
 
 where `<mode>` is either `task-1`, `task-2`, or `test`.
+If `--day` is not specified, it will run the last day.
 
 ## Note
 

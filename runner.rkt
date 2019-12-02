@@ -3,9 +3,9 @@
 (require racket/cmdline)
 
 (define the-day
-  (for/fold ([result #f] #:result (number->string result))
+  (for/fold ([result 0] #:result (number->string result))
             ([dir (directory-list)] #:when (directory-exists? dir))
-    (max (or result -1) (string->number (path->string dir)))))
+    (max result (string->number (path->string dir)))))
 
 (define mode
   (command-line
