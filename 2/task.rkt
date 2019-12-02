@@ -4,6 +4,10 @@
 
 (define ! vector-ref)
 
+;; NOTE: we are lucky that this actually works.
+;; In particular, pc happens to always be concrete throughout the execution.
+;; If this is not the case, we might need to employ symbolic reflection.
+
 ;; interp :: (vectorof number?) -> (vectorof number?)
 (define (interp vec)
   (let loop ([pc 0])
