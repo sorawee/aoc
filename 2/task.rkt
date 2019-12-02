@@ -4,9 +4,15 @@
 
 (define ! vector-ref)
 
-;; NOTE: we are lucky that this actually works.
-;; In particular, pc happens to always be concrete throughout the execution.
-;; If this is not the case, we might need to employ symbolic reflection.
+;; NOTE: I just want to use Rosette for fun, but getting Rosette to work
+;; properly will be difficult here.
+;; In particular, if the program counter becomes a symbolic value,
+;; the symbolic evaluation won't terminate! Fixing it will require
+;; symbolic reflection, but at that point we could have just solved
+;; it with the "traditional" method.
+;;
+;; In any case, the input that I got didn't cause the pc to become symbolic,
+;; so... YOLO.
 
 ;; interp :: (vectorof number?) -> (vectorof number?)
 (define (interp vec)
@@ -46,14 +52,18 @@
  ==>
  (parse-string "30,1,1,4,2,5,6,0,99"))
 
-(task-1
+(define-task task-1
  (define vec (parse-string (read-line)))
  (vector-set! vec 1 12)
  (vector-set! vec 2 2)
  (void (interp vec))
  (! vec 0))
 
-(task-2
+(tests
+ (! (interp (parse-string "1,12,2,3,2,3,11,0,99,30,40,50,99,99")) 0) ==> 5050
+ (task-1 "1,9,10,3,2,3,11,0,99,30,40,50,99,99") ==> 5050)
+
+(define-task task-2
  (define vec (parse-string (read-line)))
  (define-symbolic noun verb integer?)
  (vector-set! vec 1 noun)
@@ -62,3 +72,6 @@
  (define mod (solve (assert (= (! vec 0) 19690720))))
  (+ (* 100 (evaluate noun mod))
     (evaluate verb mod)))
+
+(tests
+ (task-2 "1,0,0,0,99,19690718,2") ==> (+ (* 100 5) 6))

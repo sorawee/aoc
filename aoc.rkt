@@ -3,10 +3,11 @@
 (provide (rename-out [module-begin #%module-begin])
          (except-out (all-from-out racket) #%module-begin)
          tests
-         task-1 task-2)
+         define-task)
 
 (require syntax/parse/define
-         rackunit)
+         rackunit
+         (for-syntax racket/syntax))
 
 (define-simple-macro (tests xs ...)
   (module+ test (tests+ xs ...)))
@@ -17,11 +18,14 @@
   [(_ A xs ...) #'(begin A (tests+ xs ...))]
   [(_) #'(begin)])
 
-(define-simple-macro (task-1 xs ...)
-  (module+ task-1 xs ...))
-
-(define-simple-macro (task-2 xs ...)
-  (module+ task-2 xs ...))
+(define-simple-macro (define-task task-name:id xs ...)
+  (begin
+    (provide task-name)
+    (define (task-name [s #f])
+      (define (proc) xs ...)
+      (cond
+        [s (with-input-from-string s proc)]
+        [else (proc)]))))
 
 (define-simple-macro (module-begin xs ...)
   (#%module-begin xs ...))

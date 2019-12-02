@@ -22,10 +22,16 @@
  (calc-module* 1969) ==> 966
  (calc-module* 100756) ==> 50346)
 
-(task-1
- (for/sum ([mass (in-port)])
-   (calc-module mass)))
+(define-task task-1
+  (for/sum ([mass (in-port)])
+    (calc-module mass)))
 
-(task-2
- (for/sum ([mass (in-port)])
-   (calc-module* mass)))
+(tests
+ (task-1 "14\n1969\n100756") ==> (+ 2 654 33583))
+
+(define-task task-2
+  (for/sum ([mass (in-port)])
+    (calc-module* mass)))
+
+(tests
+ (task-2 "14\n1969\n100756") ==> (+ 2 966 50346))
