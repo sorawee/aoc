@@ -1,4 +1,6 @@
-#lang s-exp "../aoc.rkt"
+#lang racket
+
+(require "../aoc.rkt")
 
 ;; calc-module :: number? -> number?
 (define (calc-module mass)
