@@ -1,6 +1,6 @@
 #lang rosette
 
-(require "../aoc.rkt"
+(require "../../aoc.rkt"
          syntax/parse/define)
 
 (define !! vector-ref)
@@ -21,8 +21,7 @@
          (define right (!! vec (!! vec (+ prog-counter 2))))
          (define res (!! vec (+ prog-counter 3)))
          (vector-set! vec res ((if (= op 1) + *) left right))
-         (loop (+ prog-counter 4))]
-        [_ (assert #f 'wrong-op-code)]))))
+         (loop (+ prog-counter 4))]))))
 
 ;; parse-string :: string? -> (vectorof number?)
 (define (parse-string s)
@@ -32,24 +31,19 @@
 (define parse+interp (compose1 interp parse-string))
 
 (tests
- (parse+interp "1,9,10,3,2,3,11,0,99,30,40,50")
- ==>
+ #:>> (parse+interp "1,9,10,3,2,3,11,0,99,30,40,50") is
  (parse-string "3500,9,10,70,2,3,11,0,99,30,40,50")
 
- (parse+interp "1,0,0,0,99")
- ==>
+ #:>> (parse+interp "1,0,0,0,99") is
  (parse-string "2,0,0,0,99")
 
- (parse+interp "2,3,0,3,99")
- ==>
+ #:>> (parse+interp "2,3,0,3,99") is
  (parse-string "2,3,0,6,99")
 
- (parse+interp "2,4,4,5,99,0")
- ==>
+ #:>> (parse+interp "2,4,4,5,99,0") is
  (parse-string "2,4,4,5,99,9801")
 
- (parse+interp "1,1,1,4,99,5,6,0,99")
- ==>
+ #:>> (parse+interp "1,1,1,4,99,5,6,0,99") is
  (parse-string "30,1,1,4,2,5,6,0,99"))
 
 (define (run-task a b [vec (parse-string (read-line))])
@@ -62,9 +56,8 @@
   (run-task 12 2))
 
 (tests
- (task-1 "1,9,10,3,2,3,11,0,99,30,40,50,99,99") ==> 5050
- #:because
- (!! (parse+interp "1,12,2,3,2,3,11,0,99,30,40,50,99,99") 0) ==> 5050)
+ #:>> (task-1 "1,9,10,3,2,3,11,0,99,30,40,50,99,99") is 5050
+ #:>> (!! (parse+interp "1,12,2,3,2,3,11,0,99,30,40,50,99,99") 0) is 5050)
 
 (define magic-num 19690720)
 
@@ -74,9 +67,8 @@
   (+ (* 100 (evaluate noun mod)) (evaluate verb mod)))
 
 (tests
- (task-2 "1,0,0,0,99,19690000,720") ==> (+ (* 100 5) 6)
- #:because
- (!! (parse+interp "1,5,6,0,99,19690000,720") 0) ==> magic-num)
+ #:>> (task-2 "1,0,0,0,99,19690000,720") is (+ (* 100 5) 6)
+ #:>> (!! (parse+interp "1,5,6,0,99,19690000,720") 0) is magic-num)
 
 (define-task task-2:alternative
   (define vec (parse-string (read-line)))
@@ -86,4 +78,5 @@
     (+ (* 100 noun) verb)))
 
 (tests
- (task-2:alternative "1,0,0,0,99,19690000,720") ==> (+ (* 100 5) 6))
+ #:>> (task-2:alternative "1,0,0,0,99,19690000,720") is
+ (+ (* 100 5) 6))
