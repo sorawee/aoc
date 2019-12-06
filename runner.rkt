@@ -7,7 +7,7 @@
          "./utils/utils.rkt")
 
 ;; today
-;; NOTE: use Bermuna because it's one hour earlier than New York
+;; NOTE: use Bermuda because it's one hour earlier than New York
 (define the-today (today #:tz "Atlantic/Bermuda"))
 
 ;; dec-01 before today
@@ -67,16 +67,14 @@
 (define (read-cookie)
   (define cookie-file "../../.cookie")
   (cond
-    [(file-exists? cookie-file)
-     (file->string cookie-file)]
-    [else
-     (printf "You have not provided a session id.\n")
-     (printf "> ")
-     (define cookie (read-line))
-     (with-output-to-file cookie-file
-       (thunk (display cookie)))
-     (printf "session saved\n")
-     cookie]))
+    [(file-exists? cookie-file) (file->string cookie-file)]
+    [else (printf "You have not provided a session id.\n")
+          (printf "> ")
+          (define cookie (read-line))
+          (with-output-to-file cookie-file
+            (thunk (display cookie)))
+          (printf "session saved\n")
+          cookie]))
 
 (match mode
   ["new" (void)]
@@ -92,6 +90,5 @@
           (curryr get-pure-port (list (format "Cookie: session=~a" cookie)))
           string->url)
          (format "https://adventofcode.com/~a/day/~a/input" *year* *day*)))))]
-  [_
-   ((dynamic-require '(file "task.rkt") (string->symbol mode))
-    (file->string "input.txt"))])
+  [_ ((dynamic-require '(file "task.rkt") (string->symbol mode))
+      (file->string "input.txt"))])

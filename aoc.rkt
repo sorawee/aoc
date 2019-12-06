@@ -8,35 +8,37 @@
 
 (require syntax/parse/define
          rackunit
-         fancy-app)
+         fancy-app
+         (for-syntax racket/syntax))
 
 (define-simple-macro (tests xs ...)
   (module+ test (tests+ xs ...)))
 
 (begin-for-syntax
-  (define-splicing-syntax-class input-clause
-    (pattern
-     {~seq #:on left:expr {~datum is} right:expr}
-     #:with result (syntax/loc #'left (check-equal? (left the-input) right)))
-    (pattern
-     {~seq #:on left:expr {~datum satisfies} right:expr}
-     #:with result (syntax/loc #'left (check-pred right (left the-input)))))
-
   (define-splicing-syntax-class check-clause
     (pattern
-     {~seq #:>> left:expr {~datum is} right:expr}
-     #:with result (syntax/loc #'left (check-equal? left right)))
+     {~seq left:expr {~and op {~datum is}} right:expr}
+     #:with result (syntax/loc #'left (check-equal? left right))
+     #:with residue #'(op right))
     (pattern
-     {~seq #:>> left:expr {~datum satisfies} right:expr}
-     #:with result (syntax/loc #'left (check-pred right left)))))
+     {~seq left:expr {~and op {~datum satisfies}} right:expr}
+     #:with result (syntax/loc #'left (check-pred right left))
+     #:with residue #'(op right))
+    (pattern
+     {~seq left:expr {~and op {~datum does-not-satisfies}} right:expr}
+     #:with result (syntax/loc #'left (check-pred (negate right) left))
+     #:with residue #'(op right))))
 
 (define-syntax-parser tests+
-  [(_ #:with e:expr :input-clause ... xs ...)
+  [(_ #:with e:expr {~seq #:on c:check-clause} ... xs ...)
+   #:with v (generate-temporary 'v)
+   #:with (left ...) (map (λ (e) (quasisyntax/loc e (#,e v)))
+                          (attribute c.left))
    #`(begin
-       (let ([v e]) (let ([the-input v]) result) ...)
+       (let ([v e]) (tests+ {~@ #:>> left . c.residue}) ...)
        (tests+ xs ...))]
-  [(_ :check-clause xs ...)
-   #`(begin result (tests+ xs ...))]
+  [(_ #:>> :check-clause xs ...) #`(begin result (tests+ xs ...))]
+  [(_ e:expr xs ...) #`(begin e (tests+ xs ...))]
   [(_) #'(begin)])
 
 (tests
@@ -49,12 +51,21 @@
 
  #:with 5
  #:on add1 is 6
- #:on sub1 is 4)
+ #:on sub1 is 4
 
-(define-simple-macro (define-task task-name:id xs ...)
+ (define hello 1)
+ #:>> hello is 1)
+
+(begin-for-syntax
+  (define-splicing-syntax-class task-name
+    (pattern {~seq name:id #:name subname:id}
+             #:with the-name (format-id #'name "~a:~a" #'name #'subname))
+    (pattern {~seq name:id} #:with the-name #'name)))
+
+(define-simple-macro (define-task :task-name xs ...)
   (begin
-    (provide task-name)
-    (define (task-name s)
+    (provide the-name)
+    (define (the-name s)
       (with-input-from-string s (thunk xs ...)))))
 
 (define-simple-macro (debug: e)
@@ -66,6 +77,5 @@
     (printf "    ~a\n" line))
   (printf "\n")
   v)
-
 
 (define (~ . xs) (string-join xs "\n"))

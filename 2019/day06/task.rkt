@@ -2,18 +2,23 @@
 
 (require "../../aoc.rkt")
 
-(define (search data v)
+;; type node? = string?
+;; type graph? = (hashof node? node?)
+
+;; ancestors :: graph? node? -> (listof node?)
+(define (ancestors data v)
   (cond
-    [(hash-ref data v #f) => (λ (u) (cons v (search data u)))]
+    [(hash-ref data v #f) => (λ (u) (cons v (ancestors data u)))]
     [else '()]))
 
+;; read-all :: -> graph?
 (define (read-all)
   (for/hash ([line (in-lines)])
     (apply values (reverse (string-split line ")")))))
 
 (define-task task-1
   (define data (read-all))
-  (for/sum ([key (in-hash-keys data)]) (length (search data key))))
+  (for/sum ([key (in-hash-keys data)]) (length (ancestors data key))))
 
 (tests
  #:>> (task-1 #<<EOF
@@ -33,8 +38,8 @@ EOF
 
 (define-task task-2
   (define data (read-all))
-  (define left (search data "YOU"))
-  (define right (search data "SAN"))
+  (define left (ancestors data "YOU"))
+  (define right (ancestors data "SAN"))
   (+ (length left)
      (length right)
      (- (* 2 (add1 (set-count (set-intersect left right)))))))
