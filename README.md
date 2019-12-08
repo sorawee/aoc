@@ -1,6 +1,6 @@
-# aoc-2019
+# aoc
 
-My framework and solutions for Advent of Code 2019.
+My framework and solutions for Advent of Code.
 
 ## How to run
 

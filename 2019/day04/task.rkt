@@ -1,6 +1,4 @@
-#lang racket
-
-(require "../../aoc.rkt")
+#lang aoc
 
 ;; the match trick is due to Matthew Butterick
 
@@ -18,29 +16,28 @@
           (not (list _ ... x x x _ ...))) #t]
     [_ #f]))
 
-
 (tests
- #:with '(1 1)
+ #:input '(1 1)
  #:on has-adjacent? is #t
  #:on has-adjacent*? is #t
 
- #:with '(1 2)
+ #:input '(1 2)
  #:on has-adjacent? is #f
  #:on has-adjacent*? is #f
 
- #:with '(1 1 2)
+ #:input '(1 1 2)
  #:on has-adjacent? is #t
  #:on has-adjacent*? is #t
 
- #:with '(2 1 1)
+ #:input '(2 1 1)
  #:on has-adjacent? is #t
  #:on has-adjacent*? is #t
 
- #:with '(1 2 1 1 1)
+ #:input '(1 2 1 1 1)
  #:on has-adjacent? is #t
  #:on has-adjacent*? is #f
 
- #:with '(1 2 1 1 1 3 3 1 3)
+ #:input '(1 2 1 1 1 3 3 1 3)
  #:on has-adjacent? is #t
  #:on has-adjacent*? is #t)
 

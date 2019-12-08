@@ -1,6 +1,4 @@
-#lang racket
-
-(require "../../aoc.rkt")
+#lang aoc
 
 ;; calc-module :: number? -> number?
 (define (calc-module mass)
@@ -17,15 +15,15 @@
     [else (+ mass-need (calc-module* mass-need))]))
 
 (tests
- #:with 14
+ #:input 14
  #:on calc-module is 2
  #:on calc-module* is 2
 
- #:with 1969
+ #:input 1969
  #:on calc-module is 654
  #:on calc-module* is 966
 
- #:with 100756
+ #:input 100756
  #:on calc-module is 33583
  #:on calc-module* is 50346)
 
@@ -33,12 +31,15 @@
   (for/sum ([mass (in-port)])
     (calc-module mass)))
 
-
 (define-task task-2
   (for/sum ([mass (in-port)])
     (calc-module* mass)))
 
 (tests
- #:with "14\n1969\n100756"
+ #:input $~nl"""
+14
+1969
+100756
+"""
  #:on task-1 is (+ 2 654 33583)
  #:on task-2 is (+ 2 966 50346))

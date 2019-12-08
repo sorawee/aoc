@@ -1,6 +1,4 @@
-#lang racket
-
-(require "../../aoc.rkt")
+#lang aoc
 
 ;; type node? = string?
 ;; type graph? = (hashof node? node?)
@@ -21,7 +19,7 @@
   (for/sum ([key (in-hash-keys data)]) (length (ancestors data key))))
 
 (tests
- #:>> (task-1 #<<EOF
+ #:input $~nl"""
 COM)B
 B)C
 C)D
@@ -33,8 +31,8 @@ D)I
 E)J
 J)K
 K)L
-EOF
-              ) is 42)
+"""
+ #:on task-1 is 42)
 
 (define-task task-2
   (define data (read-all))
@@ -45,7 +43,7 @@ EOF
      (- (* 2 (add1 (set-count (set-intersect left right)))))))
 
 (tests
- #:>> (task-2 #<<EOF
+ #:input $~nl"""
 COM)B
 B)C
 C)D
@@ -59,5 +57,5 @@ J)K
 K)L
 K)YOU
 I)SAN
-EOF
-              ) is 4)
+"""
+ #:on task-2 is 4)

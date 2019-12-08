@@ -1,82 +1,63 @@
-#lang rosette
-
-(require "../../aoc.rkt"
-         syntax/parse/define)
-
-(define !! vector-ref)
-
-;; NOTE: at the moment, for/all in Rosette is inefficient for
-;; concrete evaluation (for task-2:alternative).
-;; I have a patch that makes it fast, but it's not yet merged
-;; to the upstream.
-
-;; interp :: (vectorof number?) -> (vectorof number?)
-(define (interp vec)
-  (let loop ([prog-counter 0])
-    (for/all ([op (vector-ref vec prog-counter) '(1 2 99)])
-      (match op
-        [99 vec]
-        [(or 1 2)
-         (define left (!! vec (!! vec (+ prog-counter 1))))
-         (define right (!! vec (!! vec (+ prog-counter 2))))
-         (define res (!! vec (+ prog-counter 3)))
-         (vector-set! vec res ((if (= op 1) + *) left right))
-         (loop (+ prog-counter 4))]))))
-
-;; parse-string :: string? -> (vectorof number?)
-(define (parse-string s)
-  (for/vector ([e (in-list (string-split s ","))])
-    (string->number e)))
-
-(define parse+interp (compose1 interp parse-string))
+#lang aoc
+(require "../intcode/intcode.rkt")
 
 (tests
- #:>> (parse+interp "1,9,10,3,2,3,11,0,99,30,40,50") is
- (parse-string "3500,9,10,70,2,3,11,0,99,30,40,50")
+ #:name "day 2"
 
- #:>> (parse+interp "1,0,0,0,99") is
- (parse-string "2,0,0,0,99")
+ #:let lifted-basic-interp (lift-input basic-interp)
 
- #:>> (parse+interp "2,3,0,3,99") is
- (parse-string "2,3,0,6,99")
+ #:let in $~bl"""
+1,9,10,3,
+2,3,11,0,
+99,
+30,40,50
+"""
 
- #:>> (parse+interp "2,4,4,5,99,0") is
- (parse-string "2,4,4,5,99,9801")
+ #:let out $~bl"""
+3500,9,10,70,
+2,3,11,0,
+99,
+30,40,50
+"""
 
- #:>> (parse+interp "1,1,1,4,99,5,6,0,99") is
- (parse-string "30,1,1,4,2,5,6,0,99"))
+ #:>> (lifted-basic-interp in) is (parse-string out)
 
-(define (run-task a b [vec (parse-string (read-line))])
+ #:let in "1,0,0,0,99"
+ #:let out "2,0,0,0,99"
+ #:>> (lifted-basic-interp in) is (parse-string out)
+
+ #:let in "2,3,0,3,99"
+ #:let out "2,3,0,6,99"
+ #:>> (lifted-basic-interp in) is (parse-string out)
+
+ #:let in "2,4,4,5,99,0"
+ #:let out "2,4,4,5,99,9801"
+ #:>> (lifted-basic-interp in) is (parse-string out)
+
+ #:let in "1,1,1,4,99,5,6,0,99"
+ #:let out "30,1,1,4,2,5,6,0,99"
+ #:>> (lifted-basic-interp in) is (parse-string out))
+
+(define (run-task vec a b)
   (vector-set! vec 1 a)
   (vector-set! vec 2 b)
-  (interp vec)
-  (!! vec 0))
+  (basic-interp vec)
+  (vector-ref vec 0))
 
-(define-task task-1
-  (run-task 12 2))
+(define-task task-1 (run-task (the-input) 12 2))
 
 (tests
- #:>> (task-1 "1,9,10,3,2,3,11,0,99,30,40,50,99,99") is 5050
- #:>> (!! (parse+interp "1,12,2,3,2,3,11,0,99,30,40,50,99,99") 0) is 5050)
+ #:>> (task-1 "1,9,10,3,2,3,11,0,99,30,40,50,99,99") is 5050)
 
-(define magic-num 19690720)
+(define magic-num (make-parameter 19690720))
 
+;; NOTE: use vector-length instead of 100 to make the test passes
 (define-task task-2
-  (define-symbolic noun verb integer?)
-  (define mod (solve (assert (= (run-task noun verb) magic-num))))
-  (+ (* 100 (evaluate noun mod)) (evaluate verb mod)))
-
-(tests
- #:>> (task-2 "1,0,0,0,99,19690000,720") is (+ (* 100 5) 6)
- #:>> (!! (parse+interp "1,5,6,0,99,19690000,720") 0) is magic-num)
-
-(define-task task-2:alternative
-  (define vec (parse-string (read-line)))
+  (define vec (the-input))
   (for*/first ([noun (in-range 0 (vector-length vec))]
                [verb (in-range 0 (vector-length vec))]
-               #:when (= (run-task noun verb (vector-copy vec)) magic-num))
+               #:when (= (run-task (vector-copy vec) noun verb) (magic-num)))
     (+ (* 100 noun) verb)))
 
 (tests
- #:>> (task-2:alternative "1,0,0,0,99,19690000,720") is
- (+ (* 100 5) 6))
+ #:>> (task-2 "1,0,0,0,99,19690000,720") is (+ (* 100 5) 6))

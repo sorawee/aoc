@@ -1,18 +1,22 @@
 #lang racket
 
-(provide tests
+(provide (all-from-out racket)
+         tests
          define-task
          debug:
          #%app
-         ~)
+         ~nl
+         ~bl
+         for/max
+         for/min)
 
 (require syntax/parse/define
          rackunit
          fancy-app
          (for-syntax racket/syntax))
 
-(define-simple-macro (tests xs ...)
-  (module+ test (tests+ xs ...)))
+(define-simple-macro (tests {~optional {~seq #:name s:str}} xs ...)
+  (module+ test ({~? {~@ test-case s} test-begin} (tests+ xs ...))))
 
 (begin-for-syntax
   (define-splicing-syntax-class check-clause
@@ -30,7 +34,7 @@
      #:with residue #'(op right))))
 
 (define-syntax-parser tests+
-  [(_ #:with e:expr {~seq #:on c:check-clause} ... xs ...)
+  [(_ #:input e:expr {~seq #:on c:check-clause} ... xs ...)
    #:with v (generate-temporary 'v)
    #:with (left ...) (map (λ (e) (quasisyntax/loc e (#,e v)))
                           (attribute c.left))
@@ -38,23 +42,25 @@
        (let ([v e]) (tests+ {~@ #:>> left . c.residue}) ...)
        (tests+ xs ...))]
   [(_ #:>> :check-clause xs ...) #`(begin result (tests+ xs ...))]
+  [(_ #:let var:id e:expr xs ...) #'(let ([var e]) (tests+ xs ...))]
+  [(_ #:do e:expr xs ...) #'(begin e (tests+ xs ...))]
   [(_ e:expr xs ...) #`(begin e (tests+ xs ...))]
   [(_) #'(begin)])
 
 (tests
- #:with "abc"
+ #:input "abc"
  #:on string-length is 3
  #:on identity satisfies non-empty-string?
 
  #:>> (add1 1) is 2
  #:>> (add1 0) satisfies positive?
 
- #:with 5
+ #:input 5
  #:on add1 is 6
  #:on sub1 is 4
 
- (define hello 1)
- #:>> hello is 1)
+ #:let hello (- 2 1)
+ #:>> hello is (+ 0 1))
 
 (begin-for-syntax
   (define-splicing-syntax-class task-name
@@ -72,10 +78,35 @@
   (debug:core 'e e))
 
 (define (debug:core repr v)
-  (printf "~a:\n" repr)
+  (fprintf (current-error-port) "~a:\n" repr)
   (for ([line (in-list (string-split (pretty-format v) "\n"))])
-    (printf "    ~a\n" line))
-  (printf "\n")
+    (fprintf (current-error-port) "    ~a\n" line))
+  (fprintf (current-error-port) "\n")
   v)
 
-(define (~ . xs) (string-join xs "\n"))
+(define ~nl string-trim)
+(define ~bl (string-replace _ "\n" ""))
+
+(define-syntax-parser for/max
+  [(_ clauses body ... tail-expr)
+   #:with orig this-syntax
+   #'(for/fold/derived original
+       ([current-max -inf.0])
+       clauses
+       body ...
+       (define maybe-new-max tail-expr)
+       (if (> maybe-new-max current-max)
+           maybe-new-max
+           current-max))])
+
+(define-syntax-parser for/min
+  [(_ clauses body ... tail-expr)
+   #:with orig this-syntax
+   #'(for/fold/derived original
+       ([current-min -inf.0])
+       clauses
+       body ...
+       (define maybe-new-min tail-expr)
+       (if (> maybe-new-min current-min)
+           maybe-new-min
+           current-min))])
