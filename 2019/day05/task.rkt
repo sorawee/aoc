@@ -29,10 +29,9 @@
 (define-task task-1
   (basic-interp/io (the-input) 1))
 
-(module+ test
-  (define lifted-basic-interp/io (lift-input basic-interp/io)))
-
 (tests
+ #:let lifted-basic-interp/io (lift-input basic-interp/io)
+
  #:>> (lifted-basic-interp/io "3,9,8,9,10,9,4,9,99,-1,8" 8) is 1
  #:>> (lifted-basic-interp/io "3,9,8,9,10,9,4,9,99,-1,8" 7) is 0
 

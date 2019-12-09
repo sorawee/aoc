@@ -17,27 +17,27 @@
     [_ #f]))
 
 (tests
- #:input '(1 1)
+ #:in '(1 1)
  #:on has-adjacent? is #t
  #:on has-adjacent*? is #t
 
- #:input '(1 2)
+ #:in '(1 2)
  #:on has-adjacent? is #f
  #:on has-adjacent*? is #f
 
- #:input '(1 1 2)
+ #:in '(1 1 2)
  #:on has-adjacent? is #t
  #:on has-adjacent*? is #t
 
- #:input '(2 1 1)
+ #:in '(2 1 1)
  #:on has-adjacent? is #t
  #:on has-adjacent*? is #t
 
- #:input '(1 2 1 1 1)
+ #:in '(1 2 1 1 1)
  #:on has-adjacent? is #t
  #:on has-adjacent*? is #f
 
- #:input '(1 2 1 1 1 3 3 1 3)
+ #:in '(1 2 1 1 1 3 3 1 3)
  #:on has-adjacent? is #t
  #:on has-adjacent*? is #t)
 

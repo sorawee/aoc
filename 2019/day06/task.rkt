@@ -19,7 +19,7 @@
   (for/sum ([key (in-hash-keys data)]) (length (ancestors data key))))
 
 (tests
- #:input $~nl"""
+ #:in $~nl"""
 COM)B
 B)C
 C)D
@@ -43,7 +43,7 @@ K)L
      (- (* 2 (add1 (set-count (set-intersect left right)))))))
 
 (tests
- #:input $~nl"""
+ #:in $~nl"""
 COM)B
 B)C
 C)D

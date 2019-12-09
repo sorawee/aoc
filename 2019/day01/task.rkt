@@ -15,17 +15,16 @@
     [else (+ mass-need (calc-module* mass-need))]))
 
 (tests
- #:input 14
- #:on calc-module is 2
- #:on calc-module* is 2
+ #:fn calc-module
+ #:on 14 is 2
+ #:on 1969 is 654
+ #:on 100756 is 33583)
 
- #:input 1969
- #:on calc-module is 654
- #:on calc-module* is 966
-
- #:input 100756
- #:on calc-module is 33583
- #:on calc-module* is 50346)
+(tests
+ #:fn calc-module*
+ #:on 14 is 2
+ #:on 1969 is 966
+ #:on 100756 is 50346)
 
 (define-task task-1
   (for/sum ([mass (in-port)])
@@ -36,7 +35,7 @@
     (calc-module* mass)))
 
 (tests
- #:input $~nl"""
+ #:in $~nl"""
 14
 1969
 100756

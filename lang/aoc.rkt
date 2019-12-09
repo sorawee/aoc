@@ -43,9 +43,16 @@
      #:with residue #'(op right))))
 
 (define-syntax-parser tests+
-  [(_ #:input e:expr {~seq #:on c:check-clause} ... xs ...)
+  [(_ #:in e:expr {~seq #:on c:check-clause} ... xs ...)
    #:with v (generate-temporary 'v)
    #:with (left ...) (map (λ (e) (quasisyntax/loc e (#,e v)))
+                          (attribute c.left))
+   #`(begin
+       (let ([v e]) (tests+ {~@ #:>> left . c.residue}) ...)
+       (tests+ xs ...))]
+  [(_ #:fn e:expr {~seq #:on c:check-clause} ... xs ...)
+   #:with v (generate-temporary 'v)
+   #:with (left ...) (map (λ (e) (quasisyntax/loc e (v #,e)))
                           (attribute c.left))
    #`(begin
        (let ([v e]) (tests+ {~@ #:>> left . c.residue}) ...)
@@ -57,14 +64,14 @@
   [(_) #'(begin)])
 
 (tests
- #:input "abc"
+ #:in "abc"
  #:on string-length is 3
  #:on identity satisfies non-empty-string?
 
  #:>> (add1 1) is 2
  #:>> (add1 0) satisfies positive?
 
- #:input 5
+ #:in 5
  #:on add1 is 6
  #:on sub1 is 4
 
