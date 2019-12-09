@@ -18,7 +18,7 @@
       (define-values (in-for-out out-for-in) (make-pipe))
       (list in-for-out
             out-for-out
-            (make-interp (vector-copy vec) in-for-in out-for-in))))
+            (make-interp (hash-copy vec) in-for-in out-for-in))))
   (for ([amp-conf (in-list amp-confs)] [phase (in-list perm)])
     (match-define (list _ out _) amp-conf)
     (displayln phase out))

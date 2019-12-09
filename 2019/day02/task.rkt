@@ -39,10 +39,10 @@
  #:>> (lifted-basic-interp in) is (parse-string out))
 
 (define (run-task vec a b)
-  (vector-set! vec 1 a)
-  (vector-set! vec 2 b)
+  (!!! vec 1 a)
+  (!!! vec 2 b)
   (basic-interp vec)
-  (vector-ref vec 0))
+  (!! vec 0))
 
 (define-task task-1 (run-task (the-input) 12 2))
 
@@ -51,12 +51,12 @@
 
 (define magic-num (make-parameter 19690720))
 
-;; NOTE: use vector-length instead of 100 to make the test passes
+;; NOTE: use hash-count instead of 100 to make the test passes
 (define-task task-2
   (define vec (the-input))
-  (for*/first ([noun (in-range 0 (vector-length vec))]
-               [verb (in-range 0 (vector-length vec))]
-               #:when (= (run-task (vector-copy vec) noun verb) (magic-num)))
+  (for*/first ([noun (in-range 0 (hash-count vec))]
+               [verb (in-range 0 (hash-count vec))]
+               #:when (= (run-task (hash-copy vec) noun verb) (magic-num)))
     (+ (* 100 noun) verb)))
 
 (tests

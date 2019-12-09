@@ -4,23 +4,22 @@
 ;; location? = (hashof complex? (listof cell-config?))
 
 ;; draw :: location? (listof string?) id:number? -> any
-(define (draw locs xs id)
-  (for/fold ([pos 0] [t 0]) ([item (in-list xs)])
-    (match-define (pregexp "(.)(.+)" (list _ dir (app string->number len)))
-      item)
-    (define dir-vec (match dir ["R" 1+0i] ["L" -1-0i] ["U" 0+1i] ["D" 0-1i]))
-    (for/fold ([pos pos] [t t]) ([i (in-range len)])
-      (hash-update! locs (+ pos dir-vec) (curry cons (list id (add1 t))) '())
-      (values (+ pos dir-vec) (add1 t)))))
+(def (draw locs xs id)
+  #:head (for/fold ([pos 0] [t 0]) ([item (in-list xs)]))
+  (match-define (pregexp "(.)(.+)" (list _ dir (app string->number len)))
+    item)
+  (define dir-vec (match dir ["R" 1+0i] ["L" -1-0i] ["U" 0+1i] ["D" 0-1i]))
+  #:head (for/fold ([pos pos] [t t]) ([i (in-range len)]))
+  (hash-update! locs (+ pos dir-vec) (curry cons (list id (add1 t))) '())
+  (values (+ pos dir-vec) (add1 t)))
 
 ;; calc-min :: location? (complex? (listof cell-config?) -> any/c) -> number?
 (define (calc-min locs proc)
-  (inexact->exact
-   (for*/fold ([min-val +inf.0])
-              ([(key val) (in-hash locs)]
-               [visited (in-value (remove-duplicates (map first val)))]
-               #:when (> (length visited) 1))
-     (min min-val (proc key val)))))
+  (for/min ([(key val) (in-hash locs)]
+            #:when #t
+            [visited (in-value (remove-duplicates (map first val)))]
+            #:when (> (length visited) 1))
+    (proc key val)))
 
 ;; run-task :: (complex? (listof cell-config?) -> any/c) -> number?
 (define (run-task proc)

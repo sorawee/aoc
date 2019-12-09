@@ -1,6 +1,4 @@
-#lang racket
-
-(require "../../aoc.rkt")
+#lang aoc
 
 (define-task task-1
   #f)

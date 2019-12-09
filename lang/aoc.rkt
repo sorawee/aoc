@@ -1,6 +1,7 @@
 #lang racket
 
 (provide (all-from-out racket)
+         def
          tests
          define-task
          debug:
@@ -14,6 +15,14 @@
          rackunit
          fancy-app
          (for-syntax racket/syntax))
+
+(define-simple-macro (def (name+arg ...) xs ...) (define (name+arg ...) (def+ xs ...)))
+
+(define-syntax-parser def+
+  [(_ #:head (form ...) xs ...)
+   #'(form ... (def+ xs ...))]
+  [(_ x xs ...) #'(begin x (def+ xs ...))]
+  [(_) #'(begin)])
 
 (define-simple-macro (tests {~optional {~seq #:name s:str}} xs ...)
   (module+ test ({~? {~@ test-case s} test-begin} (tests+ xs ...))))
@@ -103,10 +112,10 @@
   [(_ clauses body ... tail-expr)
    #:with orig this-syntax
    #'(for/fold/derived original
-       ([current-min -inf.0])
+       ([current-min +inf.0])
        clauses
        body ...
        (define maybe-new-min tail-expr)
-       (if (> maybe-new-min current-min)
+       (if (< maybe-new-min current-min)
            maybe-new-min
            current-min))])
