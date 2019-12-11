@@ -3,34 +3,34 @@
 (require "../intcode/intcode.rkt")
 
 (module+ test
-  (define lifted-basic-interp (lift-input basic-interp)))
+  (def lifted-basic-interp (compose1 basic-interp my-read)))
 
 (tests
  #:let in "1002,4,3,4,33"
  #:let out "1002,4,3,4,99"
- #:>> (lifted-basic-interp in) is (parse-string out)
+ #:>> (lifted-basic-interp in) is (my-read out)
 
  #:let in "1101,100,-1,4,0"
  #:let out "1101,100,-1,4,99"
- #:>> (lifted-basic-interp in) is (parse-string out))
+ #:>> (lifted-basic-interp in) is (my-read out))
 
-(define (basic-interp/io vec in)
+(def (basic-interp/io vec in)
   (last (first (interp-to-complete vec in))))
 
 (tests
  #:let in "1002,4,3,4,33"
  #:let out "1002,4,3,4,99"
- #:>> (lifted-basic-interp in) is (parse-string out)
+ #:>> (lifted-basic-interp in) is (my-read out)
 
  #:let in "1101,100,-1,4,0"
  #:let out "1101,100,-1,4,99"
- #:>> (lifted-basic-interp in) is (parse-string out))
+ #:>> (lifted-basic-interp in) is (my-read out))
 
-(define-task task-1
-  (basic-interp/io (the-input) 1))
+(def-task task-1
+  (basic-interp/io (my-read) 1))
 
 (tests
- #:let lifted-basic-interp/io (lift-input basic-interp/io)
+ #:let lifted-basic-interp/io (λ (s in) (basic-interp/io (my-read s) in))
 
  #:>> (lifted-basic-interp/io "3,9,8,9,10,9,4,9,99,-1,8" 8) is 1
  #:>> (lifted-basic-interp/io "3,9,8,9,10,9,4,9,99,-1,8" 7) is 0
@@ -62,5 +62,5 @@
  #:>> (lifted-basic-interp/io in 8) is 1000
  #:>> (lifted-basic-interp/io in 9) is 1001)
 
-(define-task task-2
-  (basic-interp/io (the-input) 5))
+(def-task task-2
+  (basic-interp/io (my-read) 5))

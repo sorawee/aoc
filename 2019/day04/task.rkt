@@ -3,14 +3,14 @@
 ;; the match trick is due to Matthew Butterick
 
 ;; has-adjacent? :: (listof number?) -> boolean?
-(define (has-adjacent? xs)
+(def (has-adjacent? xs)
   (match xs
     [(list _ ... x x _ ...) #t]
     [_ #f]))
 
 
 ;; has-adjacent*? :: (listof number?) -> boolean?
-(define (has-adjacent*? xs)
+(def (has-adjacent*? xs)
   (match xs
     [(and (list _ ... x x _ ...)
           (not (list _ ... x x x _ ...))) #t]
@@ -42,25 +42,25 @@
  #:on has-adjacent*? is #t)
 
 ;; increasing? :: (listof number?) -> boolean?
-(define increasing? (curry apply <=))
+(def increasing? (curry apply <=))
 
 ;; convert :: number? -> (listof number?)
-(define (convert i)
+(def (convert i)
   (map char->integer (string->list (number->string i))))
 
 ;; calc :: number? number? ((listof number?) -> boolean?) -> (listof number?)
-(define (calc start end proc)
+(def (calc start end proc)
   (for*/list ([i (in-range start (add1 end))]
               [xs (in-value (convert i))]
               #:when (proc xs))
     i))
 
 ;; run-task :: ((listof number?) -> boolean?) -> number?
-(define (run-task proc)
+(def (run-task proc)
   (length (calc (read) (read) proc)))
 
-(define-task task-1
+(def-task task-1
   (run-task (conjoin has-adjacent? increasing?)))
 
-(define-task task-2
+(def-task task-2
   (run-task (conjoin has-adjacent*? increasing?)))

@@ -6,15 +6,14 @@
 ;; draw :: location? (listof string?) id:number? -> any
 (def (draw locs xs id)
   #:head (for/fold ([pos 0] [t 0]) ([item (in-list xs)]))
-  (match-define (pregexp "(.)(.+)" (list _ dir (app string->number len)))
-    item)
-  (define dir-vec (match dir ["R" 1+0i] ["L" -1-0i] ["U" 0+1i] ["D" 0-1i]))
+  #:let (pregexp "(.)(.+)" (list _ dir (app string->number len))) item
+  #:let dir-vec (match dir ["R" 1+0i] ["L" -1-0i] ["U" 0+1i] ["D" 0-1i])
   #:head (for/fold ([pos pos] [t t]) ([i (in-range len)]))
   (hash-update! locs (+ pos dir-vec) (curry cons (list id (add1 t))) '())
   (values (+ pos dir-vec) (add1 t)))
 
 ;; calc-min :: location? (complex? (listof cell-config?) -> any/c) -> number?
-(define (calc-min locs proc)
+(def (calc-min locs proc)
   (for/min ([(key val) (in-hash locs)]
             #:when #t
             [visited (in-value (remove-duplicates (map first val)))]
@@ -22,17 +21,17 @@
     (proc key val)))
 
 ;; run-task :: (complex? (listof cell-config?) -> any/c) -> number?
-(define (run-task proc)
-  (define locs (make-hash))
+(def (run-task proc)
+  #:let locs (make-hash)
   (for ([line (in-lines)] [i (in-naturals)])
     (draw locs (string-split line ",") i))
   (calc-min locs proc))
 
-(define-task task-1
+(def-task task-1
   (run-task (match-lambda**
              [(p _) (+ (abs (real-part p)) (abs (imag-part p)))])))
 
-(define-task task-2
+(def-task task-2
   (run-task (match-lambda** [(_ (list (list _ dist) ...)) (apply + dist)])))
 
 (tests
