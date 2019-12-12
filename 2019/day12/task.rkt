@@ -86,10 +86,10 @@
       [old i])))
 
 (def-task task-2
-  (def a (+ (repeat/axis* (first (input)))))
-  (def b (+ (repeat/axis* (second (input)))))
-  (def c (+ (repeat/axis* (third (input)))))
-  (lcm a b c))
+  (apply
+   lcm
+   (for/list ([i (in-range AXIS)])
+     (repeat/axis* (list-ref (input) i)))))
 
 (tests
  #:>> (parameterize ([input ex-input-1])
