@@ -53,8 +53,8 @@
 
 (def-task task-1
   (def by-axis
-    (for/list ([axis (in-range AXIS)])
-      (repeat/axis (list-ref (input) axis) (limit))))
+    (for/list ([axis (in-list (input))])
+      (repeat/axis axis (limit))))
 
   (for/sum ([group (transpose by-axis)])
     (for/product ([subgroup (transpose group)])
@@ -88,8 +88,8 @@
 (def-task task-2
   (apply
    lcm
-   (for/list ([i (in-range AXIS)])
-     (repeat/axis* (list-ref (input) i)))))
+   (for/list ([axis (in-list (input))])
+     (repeat/axis* axis))))
 
 (tests
  #:>> (parameterize ([input ex-input-1])
