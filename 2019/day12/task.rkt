@@ -4,11 +4,10 @@
 
 (def (step/axis old)
   (for/list ([e (in-list old)])
-    (def e-pos (first e))
-    (def e-vel (second e))
+    (match-define (list e-pos e-vel) e)
     (def e-vel*
       (+ e-vel
-         (for/sum ([e* old] #:unless (eq? e e*))
+         (for/sum ([e* (in-list old)])
            (def e*-pos (first e*))
            (sgn (- e*-pos e-pos)))))
     (def e-pos* (+ e-pos e-vel*))
@@ -52,10 +51,8 @@
 (def limit (make-parameter 1000))
 
 (def-task task-1
-  (def by-axis
-    (for/list ([axis (in-list (input))])
-      (repeat/axis axis (limit))))
-
+  #:let by-axis (for/list ([axis (in-list (input))])
+                  (repeat/axis axis (limit)))
   (for/sum ([group (transpose by-axis)])
     (for/product ([subgroup (transpose group)])
       (apply + (map abs subgroup)))))
@@ -77,13 +74,17 @@
         (task-1)) is 1940)
 
 (def (repeat/axis* old)
-  (def hs (make-hash))
+  #:let hsh (make-hash)
   (let loop ([now old] [i 0])
-    (match (hash-ref hs now #f)
+    (match (hash-ref hsh now #f)
       [#f
-       (hash-set! hs now i)
+       (hash-set! hsh now i)
        (loop (step/axis now) (add1 i))]
-      [old i])))
+      [old
+       (assert (= old 0))
+       ;; if it's not 0, then we need to use Chinese remainder theorem
+       ;; but since it is, we don't need to!
+       i])))
 
 (def-task task-2
   (apply
