@@ -74,13 +74,12 @@
 
     (define/public (main-loop)
       (let loop ()
-        (def proceed?
-          (for/or ([(pos v) (in-hash board)] #:when (member v '("." "*")))
-            (for/or ([dir (in-list DIR)]
-                     #:unless (hash-has-key? board (+ pos dir)))
-              (move pos)
-              (try-move dir))))
-        (when proceed?
+        (when (for/or ([(pos v) (in-hash board)]
+                       #:when (member v '("." "*"))
+                       [dir (in-list DIR)]
+                       #:unless (hash-has-key? board (+ pos dir)))
+                (move pos)
+                (try-move dir))
           (loop))))
 
     (public render)
