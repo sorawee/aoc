@@ -1,7 +1,6 @@
 #lang aoc
 
 (provide my-read)
-(require racket/generator)
 
 (def intcode%
   (block
@@ -69,13 +68,23 @@
           (def val (get-arg 1))
           (current-base (+ (current-base) val))
           (loop (+ prog-counter 2))]
-         [99 vec]))
+         [99 #f]))
 
-     (public basic-interp)
-     (def (basic-interp ins)
+     (public interp/input-seq)
+     (def (interp/input-seq ins)
        (parameterize ([current-in-chan (sequence->generator ins)]
                       [current-out-chan yield])
          (sequence->list (in-generator (interp)))))
+
+     (public interp/writer-reader)
+     (def (interp/writer-reader)
+       #:let q (make-queue)
+       (list
+        (enqueue! q _)
+        (generator ()
+          (parameterize ([current-in-chan (thunk (dequeue! q))]
+                         [current-out-chan yield])
+            (interp)))))
 
      (define/public (get-equality) vec)
      (define/public (get-printable) vec))))

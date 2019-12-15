@@ -5,7 +5,7 @@
 (tests
  (def/io/params (test-basic-interp [in #f])
    #:let intcode (my-read)
-   (send intcode basic-interp (list in))
+   (send intcode interp/input-seq (list in))
    intcode)
 
  #:let in "1002,4,3,4,33"
@@ -21,7 +21,7 @@
  #:>> (test-basic-interp #:in in 123) is (my-read out))
 
 (def/io/params (basic-interp/io in)
-  (last (send (my-read) basic-interp (list in))))
+  (last (send (my-read) interp/input-seq (list in))))
 
 (tests
  #:>> (basic-interp/io #:in "4,0,99" 0) is 4

@@ -6,7 +6,7 @@
 
  (def/io basic-interp
    #:let intcode (my-read)
-   (send intcode basic-interp '())
+   (send intcode interp/input-seq '())
    intcode)
 
  #:let in $~bl"""
@@ -39,11 +39,11 @@
  #:let out "30,1,1,4,2,5,6,0,99"
  #:>> (basic-interp in) is (my-read out))
 
-(def (run-task vec a b)
-  (send vec !!! 1 a)
-  (send vec !!! 2 b)
-  (send vec basic-interp '())
-  (send vec !! 0))
+(def (run-task intcode a b)
+  (send intcode !!! 1 a)
+  (send intcode !!! 2 b)
+  (send intcode interp/input-seq '())
+  (send intcode !! 0))
 
 (def-task task-1 (run-task (my-read) 12 2))
 
@@ -54,10 +54,11 @@
 
 ;; NOTE: use hash-count instead of 100 to make the test passes
 (def-task task-2
-  #:let vec (my-read)
-  (for*/first ([noun (in-range 0 (send vec size))]
-               [verb (in-range 0 (send vec size))]
-               #:when (= (run-task (send vec copy) noun verb) (magic-num)))
+  #:let intcode (my-read)
+  (for*/first ([noun (in-range 0 (send intcode size))]
+               [verb (in-range 0 (send intcode size))]
+               #:when (= (run-task (send intcode copy) noun verb)
+                         (magic-num)))
     (+ (* 100 noun) verb)))
 
 (tests
