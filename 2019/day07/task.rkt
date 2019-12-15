@@ -11,17 +11,12 @@
 (def (get-amp-confs intcode perm)
   #:let amp-confs
   (for/list ([phase (in-list perm)])
-    (def q (make-queue))
-    (def the-intcode (send intcode copy))
-    (list
-     (enqueue! q _)
-     (generator ()
-       (parameterize ([(send the-intcode get-in-chan) (thunk (dequeue! q))]
-                      [(send the-intcode get-out-chan) yield])
-         (send the-intcode interp)))))
-  (for ([amp-conf (in-list amp-confs)] [phase (in-list perm)])
-    (match-define (list writer _) amp-conf)
-    (writer phase))
+    (match-define (list writer reader)
+      (send+ intcode
+             (copy)
+             (interp/writer-reader)))
+    (writer phase)
+    (list writer reader))
   amp-confs)
 
 (def (interp-single amp-confs)
