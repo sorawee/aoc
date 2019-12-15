@@ -42,9 +42,11 @@
 (def-task task-2 #:name show
   #:let grid (task-2)
   (def N 50)
-  (for ([i (in-range (- N) N)])
-    (for ([j (in-range (- N) N)])
-      (printf "~a" (if (= 0 (hash-ref grid (+ (* i 0-i) j) 0)) "." "*")))
+  (for ([i (in-range N (- -1 N) -1)])
+    (for ([j (in-range (- N) (add1 N))])
+      (printf "~a" (if (= 0 (hash-ref grid (make-rectangular j i) 0))
+                       "."
+                       "*")))
     (newline)))
 
 
