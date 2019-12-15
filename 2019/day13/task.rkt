@@ -16,8 +16,8 @@
     (def (play)
       (unless silent?
         (render))
-      #:let (list _ ball-x) (get-ball-pos)
-      #:let (list _ pad-x) (get-pad-pos)
+      #:let (list _ ball-x) (get-pos "o")
+      #:let (list _ pad-x) (get-pos "_")
       (cond
         [(= ball-x pad-x) 0]
         [(> ball-x pad-x) 1]
@@ -35,12 +35,8 @@
     (define/public (get-board) board)
     (define/public (get-score) score)
 
-    (define/public (get-ball-pos)
-      (for/first ([(k v) (in-hash board)] #:when (equal? v "o"))
-        k))
-
-    (define/public (get-pad-pos)
-      (for/first ([(k v) (in-hash board)] #:when (equal? v "_"))
+    (define/public (get-pos what)
+      (for/first ([(k v) (in-hash board)] #:when (equal? v what))
         k))
 
     (public render)
