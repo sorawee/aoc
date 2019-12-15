@@ -1,27 +1,28 @@
 #lang aoc
 
-(require "../intcode/intcode.rkt")
-
-(def N (make-parameter 5))
+(require data/queue
+         "../intcode/intcode.rkt")
 
 (def (interp-pass amp-confs input)
   (for/fold ([input input]) ([amp-conf (in-list amp-confs)])
-    (match-define (list in out runner) amp-conf)
-    (displayln input out)
-    (runner)
-    (read in)))
+    (match-define (list q runner) amp-conf)
+    (enqueue! q input)
+    (runner)))
 
 (def (get-amp-confs vec perm)
   #:let amp-confs
-  (for/list ([i (in-range (N))])
-    (define-values (in-for-in out-for-out) (make-pipe))
-    (define-values (in-for-out out-for-in) (make-pipe))
-    (list in-for-out
-          out-for-out
-          (make-interp (hash-copy vec) in-for-in out-for-in)))
+  (for/list ([phase (in-list perm)])
+    (def q (make-queue))
+    (def the-vec (send vec copy))
+    (list
+     q
+     (generator ()
+       (parameterize ([(send the-vec get-in-chan) (thunk (dequeue! q))]
+                      [(send the-vec get-out-chan) yield])
+         (send the-vec interp)))))
   (for ([amp-conf (in-list amp-confs)] [phase (in-list perm)])
-    (match-define (list _ out _) amp-conf)
-    (displayln phase out))
+    (match-define (list q _) amp-conf)
+    (enqueue! q phase))
   amp-confs)
 
 (def (interp-single amp-confs)
@@ -30,32 +31,32 @@
 (def-task task-1
   #:let vec (my-read)
   (for/max ([perm (in-permutations '(0 1 2 3 4))])
-    (interp-multi (get-amp-confs vec perm))))
+    (interp-single (get-amp-confs vec perm))))
 
 (tests
  #:let in "3,15,3,16,1002,16,10,16,1,16,15,15,4,15,99,0,0"
- #:>> (interp-multi (get-amp-confs (my-read in) '(4 3 2 1 0))) is 43210
+ #:>> (interp-single (get-amp-confs (my-read in) '(4 3 2 1 0))) is 43210
  #:>> (task-1 in) is 43210
 
  #:let in $~bl"""
 3,23,3,24,1002,24,10,24,1002,23,-1,23,
 101,5,23,23,1,24,23,23,4,23,99,0,0
 """
- #:>> (interp-multi (get-amp-confs (my-read in) '(0 1 2 3 4))) is 54321
+ #:>> (interp-single (get-amp-confs (my-read in) '(0 1 2 3 4))) is 54321
  #:>> (task-1 in) is 54321
 
  #:let in $~bl"""
 3,31,3,32,1002,32,10,32,1001,31,-2,31,1007,31,0,33,
 1002,33,7,33,1,33,31,31,1,32,31,31,4,31,99,0,0,0
 """
- #:>> (interp-multi (get-amp-confs (my-read in) '(1 0 4 3 2))) is 65210
+ #:>> (interp-single (get-amp-confs (my-read in) '(1 0 4 3 2))) is 65210
  #:>> (task-1 in) is 65210)
 
 (def (interp-multi amp-confs)
   (let loop ([input 0])
     (def val (interp-pass amp-confs input))
     (cond
-      [(eof-object? val) input]
+      [(not (number? val)) input]
       [else (loop val)])))
 
 (def-task task-2

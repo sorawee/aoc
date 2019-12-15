@@ -4,7 +4,10 @@
 (tests
  #:name "day 2"
 
- #:let lifted-basic-interp (compose1 basic-interp my-read)
+ (def/io basic-interp
+   #:let intcode (my-read)
+   (send intcode basic-interp '())
+   intcode)
 
  #:let in $~bl"""
 1,9,10,3,
@@ -18,29 +21,29 @@
 99,
 30,40,50
 """
- #:>> (lifted-basic-interp in) is (my-read out)
+ #:>> (basic-interp in) is (my-read out)
 
  #:let in "1,0,0,0,99"
  #:let out "2,0,0,0,99"
- #:>> (lifted-basic-interp in) is (my-read out)
+ #:>> (basic-interp in) is (my-read out)
 
  #:let in "2,3,0,3,99"
  #:let out "2,3,0,6,99"
- #:>> (lifted-basic-interp in) is (my-read out)
+ #:>> (basic-interp in) is (my-read out)
 
  #:let in "2,4,4,5,99,0"
  #:let out "2,4,4,5,99,9801"
- #:>> (lifted-basic-interp in) is (my-read out)
+ #:>> (basic-interp in) is (my-read out)
 
  #:let in "1,1,1,4,99,5,6,0,99"
  #:let out "30,1,1,4,2,5,6,0,99"
- #:>> (lifted-basic-interp in) is (my-read out))
+ #:>> (basic-interp in) is (my-read out))
 
 (def (run-task vec a b)
-  (!!! vec 1 a)
-  (!!! vec 2 b)
-  (basic-interp vec)
-  (!! vec 0))
+  (send vec !!! 1 a)
+  (send vec !!! 2 b)
+  (send vec basic-interp '())
+  (send vec !! 0))
 
 (def-task task-1 (run-task (my-read) 12 2))
 
@@ -52,9 +55,9 @@
 ;; NOTE: use hash-count instead of 100 to make the test passes
 (def-task task-2
   #:let vec (my-read)
-  (for*/first ([noun (in-range 0 (hash-count vec))]
-               [verb (in-range 0 (hash-count vec))]
-               #:when (= (run-task (hash-copy vec) noun verb) (magic-num)))
+  (for*/first ([noun (in-range 0 (send vec size))]
+               [verb (in-range 0 (send vec size))]
+               #:when (= (run-task (send vec copy) noun verb) (magic-num)))
     (+ (* 100 noun) verb)))
 
 (tests
