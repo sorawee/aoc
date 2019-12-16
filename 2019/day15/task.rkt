@@ -31,9 +31,16 @@
          (enqueue! q new-pos))
        (loop)])))
 
+(def (internal-dir->external-dir dir)
+  (match dir
+    [0+i 1]
+    [0-i 2]
+    [-1 3]
+    [1 4]))
+
 (def maze%
   (class object% (super-new)
-    (init-field intcode)
+    (init-field intcode [silent? #t])
 
     (def board (make-hash '([0 . "."])))
     (def current-pos 0)
@@ -41,32 +48,23 @@
 
     (def (move pos)
       (for ([dir (in-list (find-path (shortest-path board current-pos) pos))])
-        (writer
-         (match dir
-           [0+i 1]
-           [0-i 2]
-           [-1 3]
-           [1 4]))
+        (writer (internal-dir->external-dir dir))
         ;; NOTE: need to call reader to flush the queue
         (assert (member (reader) '(1 2))))
       (set! current-pos pos))
 
     (define/public (get-target)
-      (for/first ([(k v) (in-hash board)]
-                  #:when (equal? v "*"))
+      (for/first ([(k v) (in-hash board)] #:when (equal? v "*"))
         k))
 
     (define/public (get-board) board)
 
     (def (try-move dir)
-      (writer (match dir
-                [-1 3]
-                [1 4]
-                [0+i 1]
-                [0-i 2]))
+      (writer (internal-dir->external-dir dir))
       #:let new-pos (+ current-pos dir)
       (match (reader)
-        [0 (hash-set! board new-pos "#")]
+        [0 (hash-set! board new-pos "#")
+           #f]
         [1 (hash-set! board new-pos ".")
            (set! current-pos new-pos)]
         [2 (hash-set! board new-pos "*")
@@ -74,7 +72,11 @@
 
     (define/public (main-loop)
       (let loop ()
-        (when (for/or ([(pos v) (in-hash board)]
+        (unless silent?
+          (render))
+        ;; make a copy of hash: we don't want to iterate and modify at
+        ;; the same time!
+        (when (for/or ([(pos v) (in-hash (hash-copy board))]
                        #:when (member v '("." "*"))
                        [dir (in-list DIR)]
                        #:unless (hash-has-key? board (+ pos dir)))
@@ -92,16 +94,22 @@
                     (imag-part pos))
       #:let x-min (for/min ([pos (in-hash-keys board)])
                     (real-part pos))
+      (display "\033c")
       (for ([i (in-range y-max (sub1 y-min) -1)])
         (for ([j (in-range x-min (add1 x-max))])
           (display (hash-ref board (make-rectangular j i) " ")))
         (newline))
       (newline))))
 
+(def-task task-0
+  #:let maze (new maze% [intcode (my-read)] [silent? #f])
+  (send maze main-loop))
+
 (def-task task-1
   #:let maze (new maze% [intcode (my-read)])
   (send maze main-loop)
-  (length (shortest-path (send maze get-board) 0 (send maze get-target))))
+  (length (find-path (shortest-path (send maze get-board) 0)
+                     (send maze get-target))))
 
 (def-task task-2
   #:let maze (new maze% [intcode (my-read)])

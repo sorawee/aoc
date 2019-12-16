@@ -8,60 +8,50 @@
     (field [height (length grid)]
            [width (length (first grid))])
 
-    (define/public (get-cell y x)
-      (and (<= 0 y (sub1 height))
-           (<= 0 x (sub1 width))
-           (list-ref (list-ref grid y) x)))
+    (define/public (get-cell pos)
+      (and (<= 0 (imag-part pos) (sub1 height))
+           (<= 0 (real-part pos) (sub1 width))
+           (list-ref (list-ref grid (imag-part pos)) (real-part pos))))
 
     (define/public (in-grid [c #f])
-      (in-generator
-       #:arity 2
-       (for* ([i (in-range height)]
-              [j (in-range width)]
-              #:when (or (not c) (equal? c (get-cell i j))))
-         (yield i j))))))
+      (for*/list ([i (in-range height)]
+                  [j (in-range width)]
+                  [pos (in-value (make-rectangular j i))]
+                  #:when (or (not c) (equal? c (get-cell pos))))
+        pos))))
 
 (def/io my-read
   (new grid% [grid (for/list ([line (in-lines)])
                      (string->list line))]))
 
-(def ((bad? i j y x) grid)
-  #:let dy (- y i)
-  #:let dx (- x j)
-  #:let common (gcd dy dx)
-  (for/or ([k (in-range 1 common)])
-    (def y* (+ i (* (/ dy common) k)))
-    (def x* (+ j (* (/ dx common) k)))
-    ;; this sucks... why can't we have nice continuations?
-    (def result
-      (match (send grid get-cell y* x*)
-        [#f '#:break]
-        [#\# #t]
-        [_ #f]))
-    #:break (equal? result '#:break)
-    result))
+(struct point [pos angle round rel-round] #:transparent)
+(define 12:00 (atan -1 0))
 
-(tests
- #:in (my-read $~nl"""
-X.#.T
-..#.T
-..#.T
-""")
- #:on (bad? 0 0 0 4) is #t
- #:on (bad? 0 0 1 4) is #f
- #:on (bad? 0 0 2 4) is #t)
+(def (enum grid orig)
+  #:let xs (for*/list ([pos (in-list (send grid in-grid #\#))]
+                       #:unless (equal? pos orig))
+             (def diff (- pos orig))
+             (def dy (imag-part diff))
+             (def dx (real-part diff))
+             (point pos (atan dy dx) (gcd dy dx) #f))
+  #:let xs (sort xs < #:key point-angle)
+  (define-values (before after)
+    (splitf-at xs (λ (p) (< (point-angle p) 12:00))))
+  #:let xs (append after before) ; angle fixed
+  #:let groups (group-by point-angle xs)
+  (for/list ([group (in-list groups)]
+             #:when #t
+             [e (in-list (sort group < #:key point-round))]
+             [i (in-naturals)])
+    (struct-copy point e [rel-round i])))
 
-(def (how-many grid i j)
-  #:head (sub1)
-  (for*/sum ([(y x) (send grid in-grid #\#)]
-             #:unless ((bad? i j y x) grid))
-    1))
+(def (how-many grid orig)
+  (count (λ (p) (= (point-rel-round p) 0)) (enum grid orig)))
 
 (def (calc-max grid)
   #:let pos
-  (argmax (apply how-many grid _)
-          (sequence->list (in-values-sequence (send grid in-grid #\#))))
-  (list pos (apply how-many grid pos)))
+  (argmax (how-many grid _) (send grid in-grid #\#))
+  (list pos (how-many grid pos)))
 
 (tests
  (def large-example $~nl"""
@@ -95,7 +85,7 @@ X.#.T
 #####
 ....#
 ...##
-""" is '((4 3) 8)
+""" is '(3+4i 8)
  #:on $~nl"""
 ......#.#.
 #..#.#....
@@ -107,7 +97,7 @@ X.#.T
 .##.#..###
 ##...#..#.
 .#....####
-""" is '((8 5) 33)
+""" is '(5+8i 33)
  #:on $~nl"""
 #.#...#.#.
 .###....#.
@@ -119,7 +109,7 @@ X.#.T
 ..##....##
 ......#...
 .####.###.
-""" is '((2 1) 35)
+""" is '(1+2i 35)
  #:on $~nl"""
 .#..#..###
 ####.###.#
@@ -131,52 +121,21 @@ X.#.T
 #..#.#.###
 .##...##.#
 .....#.#..
-""" is '((3 6) 41)
- #:on large-example is '((13 11) 210))
+""" is '(6+3i 41)
+ #:on large-example is '(11+13i 210))
 
 (def-task task-1
   (second (calc-max (my-read))))
 
-(define 12:00 (atan -1 0))
-
-(def (pt< a b)
-  #:let (list _ _ theta-a i-a) a
-  #:let (list _ _ theta-b i-b) b
-  (cond
-    [(= theta-a theta-b) (< i-a i-b)]
-    [else (< theta-a theta-b)]))
-
-(def (enum grid)
-  #:let N (add1 (max (get-field width grid) (get-field height grid)))
-  #:let xs (for*/list ([i (in-range (- N) N)] [j (in-range (- N) N)]
-                       #:unless (and (= i 0) (= j 0)))
-             (list i j (atan i j) (gcd i j)))
-  #:let xs (sort xs pt<)
-  #:let xs (group-by third xs)
-  (define-values (before after)
-    (splitf-at xs (λ (g) (< (third (first g)) 12:00))))
-  (append after before))
 
 (def ((get-nth limit) grid)
-  #:let (list (list orig-y orig-x) _) (calc-max grid)
-  (let loop ([loc (enum grid)] [limit limit])
-    (match loc
-      [(list (list) as ...) (loop as limit)]
-      [(list (list (list y x _ ...) bs ...) as ...)
-       (def y* (+ orig-y y))
-       (def x* (+ orig-x x))
-       (cond
-         [(equal? (send grid get-cell y* x*) #\#)
-          (if (= limit 1)
-              (list y* x*)
-              (loop (append as (list bs)) (sub1 limit)))]
-         [else (loop (cons bs as) limit)])]
-      [(list) (error 'out-of-bounds)])))
+  #:let (list orig _) (calc-max grid)
+  #:let xs (sort (enum grid orig) < #:key point-rel-round)
+  (point-pos (list-ref xs (sub1 limit))))
 
-(def-task task-2
-  ((get-nth 200) (my-read)))
+(def-task task-2 ((get-nth 200) (my-read)))
 
-(tests #:name "hello"
+(tests
  #:in (my-read $~nl"""
 .#....#####...#..
 ##...##.#####..##
@@ -184,36 +143,25 @@ X.#.T
 ..#.....#...###..
 ..#.#.....#....##
 """)
- #:on (get-nth 1) is '(1 8)
- #:on (get-nth 2) is '(0 9)
- #:on (get-nth 3) is '(1 9)
- #:on (get-nth 4) is '(0 10)
- #:on (get-nth 5) is '(2 9)
- #:on (get-nth 6) is '(1 11)
- #:on (get-nth 7) is '(1 12)
- #:on (get-nth 8) is '(2 11)
- #:on (get-nth 9) is '(1 15)
-
- #:on (get-nth 10) is '(2 12)
- #:on (get-nth 11) is '(2 13)
- #:on (get-nth 12) is '(2 14)
- #:on (get-nth 13) is '(2 15)
- #:on (get-nth 14) is '(3 12)
- #:on (get-nth 15) is '(4 16)
- #:on (get-nth 16) is '(4 15)
- #:on (get-nth 17) is '(4 10)
- #:on (get-nth 18) is '(4 4)
+ #:on (get-nth 1) is 8+1i
+ #:on (get-nth 2) is 9
+ #:on (get-nth 3) is 9+i
+ #:on (get-nth 4) is 10
+ #:on (get-nth 5) is 9+2i
+ #:on (get-nth 6) is 11+i
+ #:on (get-nth 7) is 12+i
+ #:on (get-nth 8) is 11+2i
+ #:on (get-nth 9) is 15+i
 
  #:in (my-read large-example)
- #:on (get-nth 1) is '(12 11)
- #:on (get-nth 2) is '(1 12)
- #:on (get-nth 3) is '(2 12)
- #:on (get-nth 10) is '(8 12)
- #:on (get-nth 20) is '(0 16)
- #:on (get-nth 50) is '(9 16)
- #:on (get-nth 100) is '(16 10)
- #:on (get-nth 199) is '(6 9)
- #:on (get-nth 200) is '(2 8)
- #:on (get-nth 201) is '(9 10)
- #:on (get-nth 299) is '(1 11)
- )
+ #:on (get-nth 1) is 11+12i
+ #:on (get-nth 2) is 12+i
+ #:on (get-nth 3) is 12+2i
+ #:on (get-nth 10) is 12+8i
+ #:on (get-nth 20) is 16
+ #:on (get-nth 50) is 16+9i
+ #:on (get-nth 100) is 10+16i
+ #:on (get-nth 199) is 9+6i
+ #:on (get-nth 200) is 8+2i
+ #:on (get-nth 201) is 10+9i
+ #:on (get-nth 299) is 11+i)
